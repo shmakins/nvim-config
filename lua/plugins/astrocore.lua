@@ -1,4 +1,4 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+
 
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
@@ -52,6 +52,28 @@ return {
         -- This can be found in the `lua/lazy_setup.lua` file
       },
     },
+    -- Autocmds can be configured through AstroCore as well.
+    autocmds = {
+      lsp_log_truncate = {
+        {
+          event = "VimEnter",
+          desc = "Truncate LSP log on startup to prevent unbounded growth",
+          callback = function()
+            local log = vim.lsp.get_log_path()
+            local max_kb = 5120 -- 5 MB
+            local f = io.open(log, "r")
+            if f then
+              local size = f:seek("end")
+              f:close()
+              if size > max_kb * 1024 then
+                local trunc = io.open(log, "w")
+                if trunc then trunc:close() end
+              end
+            end
+          end,
+        },
+      },
+    },
     -- Mappings can be configured through AstroCore as well.
     -- NOTE: keycodes follow the casing in the vimdocs. For example, `<Leader>` must be capitalized
     mappings = {
@@ -79,6 +101,25 @@ return {
 
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
+
+        -- Toggle quickfix window (override AstroNvim's default <C-q> quit binding)
+        ["<C-q>"] = {
+          function()
+            local qf_open = false
+            for _, win in ipairs(vim.fn.getwininfo()) do
+              if win.quickfix == 1 then
+                qf_open = true
+                break
+              end
+            end
+            if qf_open then
+              vim.cmd "cclose"
+            else
+              vim.cmd "copen"
+            end
+          end,
+          desc = "Toggle quickfix window",
+        },
       },
     },
   },
